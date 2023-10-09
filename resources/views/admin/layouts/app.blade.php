@@ -220,6 +220,15 @@
                                 </p>
                             </router-link>
                         </li>
+                        <li class="nav-item">
+                            <router-link to="/admin/users" class="nav-link">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>
+                                    Users
+                                    {{-- <span class="right badge badge-danger">New</span> --}}
+                                </p>
+                            </router-link>
+                        </li>
                     </ul>
                 </nav>
 
