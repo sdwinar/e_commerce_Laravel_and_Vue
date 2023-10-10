@@ -38,13 +38,20 @@ const editUserSchema = yup.object({
 
 // ***********************************************************
 
-const createUser = (values) => {
-  axios.post("/api/users", values).then((response) => {
-    users.value.unshift(response.data);
-
-    $("#addUserModel").modal("hide");
-    // resetForm();
-  });
+const createUser = (values, { resetForm, setErrors }) => {
+  axios
+    .post("/api/users", values)
+    .then((response) => {
+      users.value.data.unshift(response.data);
+      $("#userFormModal").modal("hide");
+      resetForm();
+      toastr.success("User created successfully!");
+    })
+    .catch((error) => {
+      if (error.response.data.errors) {
+        setErrors(error.response.data.errors);
+      }
+    });
 };
 
 // ***********************************************************
@@ -52,8 +59,8 @@ const createUser = (values) => {
 const addUser = () => {
   editing.value = false;
   form.value.resetForm();
-// ***********************************************************
-}
+  // ***********************************************************
+};
 const editUser = (user) => {
   editing.value = true;
   form.value.resetForm();
@@ -68,26 +75,20 @@ const editUser = (user) => {
 
 // ***************************************************************
 
-const updateUser = (values) => {
-
-  axios.put("/api/users/" + formValues.value.id, values)
+const updateUser = (values, { setErrors }) => {
+  axios
+    .put("/api/users/" + formValues.value.id, values)
     .then((response) => {
-      const index = users.value.findIndex(
+      const index = users.value.data.findIndex(
         (user) => user.id === response.data.id
       );
-      users.value[index] = response.data;
-      form.value.resetForm();
-      $("#addUserModel").modal("hide");
-
-      // alert(user.id)
-      //   toastr.success("User updated successfully!");
+      users.value.data[index] = response.data;
+      $("#userFormModal").modal("hide");
+      toastr.success("User updated successfully!");
     })
     .catch((error) => {
-      alert(error);
-    })
-    .finally(() => {
-      //form.value.resetForm();
-
+      setErrors(error.response.data.errors);
+      console.log(error);
     });
 };
 
@@ -96,9 +97,9 @@ const updateUser = (values) => {
 const handleSubmit = (values, actions) => {
   // console.log(actions);
   if (editing.value) {
-    updateUser(values);
+    updateUser(values, actions);
   } else {
-    createUser(values);
+    createUser(values, actions);
   }
 };
 
