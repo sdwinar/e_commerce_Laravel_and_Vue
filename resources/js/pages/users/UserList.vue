@@ -42,10 +42,10 @@ const createUser = (values, { resetForm, setErrors }) => {
   axios
     .post("/api/users", values)
     .then((response) => {
-      users.value.data.unshift(response.data);
+      users.value.unshift(response.data);
       $("#userFormModal").modal("hide");
       resetForm();
-      toastr.success("User created successfully!");
+      //toastr.success("User created successfully!");
     })
     .catch((error) => {
       if (error.response.data.errors) {
@@ -53,10 +53,16 @@ const createUser = (values, { resetForm, setErrors }) => {
       }
     });
 };
+// ***********************************************************cancel_button_resetform
 
-// ***********************************************************
+const addUser = ({ resetForm }) => {
+  editing.value = false;
+  resetForm();
+  // ***********************************************************
+};
+// ***********************************************************cancel_button_resetform
 
-const addUser = () => {
+const cancel_button_resetform = () => {
   editing.value = false;
   form.value.resetForm();
   // ***********************************************************
@@ -64,7 +70,7 @@ const addUser = () => {
 const editUser = (user) => {
   editing.value = true;
   form.value.resetForm();
-  $("#addUserModel").modal("show");
+  $("#userFormModal").modal("show");
   formValues.value = {
     id: user.id,
     name: user.name,
@@ -73,23 +79,37 @@ const editUser = (user) => {
   };
 };
 
+
+  // ***********************************************************
+const resetForm_btn = (user) => {
+    formValues.value = {
+    id: '',
+    name:'',
+    email:'',
+    password:'',
+  };
+
+};
+
 // ***************************************************************
 
-const updateUser = (values, { setErrors }) => {
-  axios
-    .put("/api/users/" + formValues.value.id, values)
+
+const updateUser = (values,{ resetForm, setErrors }) => {
+  axios.put('/api/users/' + formValues.value.id, values)
     .then((response) => {
-      const index = users.value.data.findIndex(
-        (user) => user.id === response.data.id
-      );
-      users.value.data[index] = response.data;
+      const index = users.value.findIndex((user) => user.id === response.data.id);
+      users.value[index] = response.data;
       $("#userFormModal").modal("hide");
-      toastr.success("User updated successfully!");
+      resetForm();
+   //   toastr.success("User updated successfully!");
     })
     .catch((error) => {
-      setErrors(error.response.data.errors);
-      console.log(error);
-    });
+    //   setErrors(error.response.data.errors);
+    setErrors(error.response.data.errors);
+    })
+    // .finally(()=>{
+    //   form.value.resetForm();
+    // })
 };
 
 // *******************************************************************
@@ -133,7 +153,7 @@ onMounted(() => {
           type="button"
           class="btn btn-primary mb-2"
           data-toggle="modal"
-          data-target="#addUserModel"
+          data-target="#userFormModal"
           @click="addUser"
         >
           Add New User
@@ -175,7 +195,7 @@ onMounted(() => {
   <!-- Modal -->
   <div
     class="modal fade"
-    id="addUserModel"
+    id="userFormModal"
     data-backdrop="static"
     tabindex="-1"
     role="dialog"
@@ -250,13 +270,22 @@ onMounted(() => {
             </div>
           </div>
           <div class="modal-footer">
+            <!-- <button
+              type="button"
+              class="btn btn-warning"
+              onclick="reset()"
+            >
+              Re Set Form
+            </button> -->
             <button
               type="button"
               class="btn btn-secondary"
               data-dismiss="modal"
+              @click="cancel_button_resetform"
             >
               Cancel
             </button>
+
             <button type="submit" class="btn btn-primary">
               {{ editing ? "Edit" : "Save" }}
             </button>
