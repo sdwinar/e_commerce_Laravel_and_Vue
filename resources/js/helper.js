@@ -20,7 +20,7 @@ import moment from "moment";
   };
 
   // Replace numeric month with character month
-  export function convertDateToCharacterMonth(date) {
+  export function formatDate(date) {
     const formattedDate = moment(date).format("YYYY-MM-DD");
     const numericMonth = formattedDate.slice(5, 7);
     const characterMonth = monthMap[numericMonth];

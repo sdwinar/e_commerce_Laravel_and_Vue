@@ -1,152 +1,157 @@
 <script setup>
-import axios from "axios";
-import { ref, onMounted, reactive } from "vue";
-import { Form, Field, useResetForm } from "vee-validate";
-import * as yup from "yup";
-import { useToastr } from "../../toastr.js";
-import { convertDateToCharacterMonth } from "../../helper.js";
+import axios from 'axios';
+import { ref, onMounted, reactive, watch } from 'vue';
+import { Form, Field, useResetForm } from 'vee-validate';
+import * as yup from 'yup';
+import { useToastr } from '../../toastr.js';
+import UserListItem from './UserListItem.vue';
+// import { debounce } from 'lodash';
+// import { Bootstrap4Pagination } from 'laravel-vue-pagination';
 
 const toastr = useToastr();
-const users = ref([]);
+const users = ref({'data': []});
 const editing = ref(false);
-const formValues = ref(); // formValues.value = {
-const form = ref(null); //form.value.resetForm();
-const userIdBeingDeleted = ref(null);
+const formValues = ref();
+const form = ref(null);
 
-
-// ***********************************************************
-
-const getUsers = () => {
-  axios.get("/api/users").then((response) => {
-    users.value = response.data;
-    // alert(users.value)
-  });
-};
-
-// ***********************************************************
+const getUsers = (page = 1) => {
+    axios.get(`/api/users?page=${page}`, {
+        params: {
+            query: searchQuery.value
+        }
+    })
+    .then((response) => {
+        users.value = response.data;
+        selectedUsers.value = [];
+        selectAll.value = false;
+    })
+}
 
 const createUserSchema = yup.object({
-  name: yup.string().required(),
-  email: yup.string().email().required(),
-  password: yup.string().required().min(4),
+    name: yup.string().required(),
+    email: yup.string().email().required(),
+    password: yup.string().required().min(8),
 });
-
-// ***********************************************************
 
 const editUserSchema = yup.object({
-  name: yup.string().required(),
-  email: yup.string().email().required(),
-  password: yup.string().when((password, schema) => {
-    return password ? schema.min(4) : schema;
-  }),
+    name: yup.string().required(),
+    email: yup.string().email().required(),
+    password: yup.string().when((password, schema) => {
+        return password ? schema.required().min(8) : schema;
+    }),
 });
 
-// ***********************************************************
-
 const createUser = (values, { resetForm, setErrors }) => {
-  axios
-    .post("/api/users", values)
-    .then((response) => {
-      users.value.unshift(response.data);
-      $("#userFormModal").modal("hide");
-      resetForm();
-      toastr.success("User created successfully!");
-    })
-    .catch((error) => {
-      if (error.response.data.errors) {
-        setErrors(error.response.data.errors);
-      }
-    });
+    axios.post('/api/users', values)
+        .then((response) => {
+            users.value.data.unshift(response.data);
+            $('#userFormModal').modal('hide');
+            resetForm();
+            toastr.success('User created successfully!');
+        })
+        .catch((error) => {
+            if (error.response.data.errors) {
+                setErrors(error.response.data.errors);
+            }
+        })
 };
-// ***********************************************************cancel_button_resetform
 
-const addUser = ({ resetForm }) => {
-  editing.value = false;
-  resetForm();
-  // ***********************************************************
+const addUser = () => {
+    editing.value = false;
+    $('#userFormModal').modal('show');
 };
-// ***********************************************************cancel_button_resetform
 
-const cancel_button_resetform = () => {
-  editing.value = false;
-  form.value.resetForm();
-  // ***********************************************************
-};
 const editUser = (user) => {
-  editing.value = true;
-  form.value.resetForm();
-  $("#userFormModal").modal("show");
-  formValues.value = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    password: user.password,
-  };
+    editing.value = true;
+    form.value.resetForm();
+    $('#userFormModal').modal('show');
+    formValues.value = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+    };
 };
 
-// ***********************************************************
-const resetForm_btn = (user) => {
-  formValues.value = {
-    id: "",
-    name: "",
-    email: "",
-    password: "",
-  };
-};
-
-// ***************************************************************
-
-const updateUser = (values, { resetForm, setErrors }) => {
-  axios
-    .put("/api/users/" + formValues.value.id, values)
-    .then((response) => {
-      const index = users.value.findIndex(
-        (user) => user.id === response.data.id
-      );
-      users.value[index] = response.data;
-      $("#userFormModal").modal("hide");
-      resetForm();
-      toastr.success("User updated successfully!");
-    })
-    .catch((error) => {
-      //   setErrors(error.response.data.errors);
-      setErrors(error.response.data.errors);
-    });
-  // .finally(()=>{
-  //   form.value.resetForm();
-  // })
-};
-
-// *******************************************************************
+const updateUser = (values, { setErrors }) => {
+    axios.put('/api/users/' + formValues.value.id, values)
+        .then((response) => {
+            const index = users.value.data.findIndex(user => user.id === response.data.id);
+            users.value.data[index] = response.data;
+            $('#userFormModal').modal('hide');
+            toastr.success('User updated successfully!');
+        }).catch((error) => {
+            setErrors(error.response.data.errors);
+            console.log(error);
+        });
+}
 
 const handleSubmit = (values, actions) => {
-  // console.log(actions);
-  if (editing.value) {
-    updateUser(values, actions);
-  } else {
-    createUser(values, actions);
-  }
+    // console.log(actions);
+    if (editing.value) {
+        updateUser(values, actions);
+    } else {
+        createUser(values, actions);
+    }
+}
+
+// const searchQuery = ref(null);
+
+// const selectedUsers = ref([]);
+// const toggleSelection = (user) => {
+//     const index = selectedUsers.value.indexOf(user.id);
+//     if (index === -1) {
+//         selectedUsers.value.push(user.id);
+//     } else {
+//         selectedUsers.value.splice(index, 1);
+//     }
+//     console.log(selectedUsers.value);
+// };
+
+const userIdBeingDeleted = ref(null);
+const confirmUserDeletion = (id) => {
+    userIdBeingDeleted.value = id;
+    $('#deleteUserModal').modal('show');
 };
 
-//******************************************************************** */
-const confirmUserDeletion = (user) => {
-  userIdBeingDeleted.value = user.id;
-  $("#deleteUserModal").modal("show");
-};
-//******************************************************************** */
 const deleteUser = () => {
-  axios.delete(`/api/users/${userIdBeingDeleted.value}`).then(() => {
-    $("#deleteUserModal").modal("hide");
-    users.value = users.value.filter(
-      (user) => user.id !== userIdBeingDeleted.value
-    );
-    toastr.success("User deleted successfully!");
-  });
+    axios.delete(`/api/users/${userIdBeingDeleted.value}`)
+    .then(() => {
+        $('#deleteUserModal').modal('hide');
+        toastr.success('User deleted successfully!');
+        users.value.data = users.value.data.filter(user => user.id !== userIdBeingDeleted.value);
+    });
 };
-//******************************************************************** */
+
+// const bulkDelete = () => {
+//     axios.delete('/api/users', {
+//         data: {
+//             ids: selectedUsers.value
+//         }
+//     })
+//     .then(response => {
+//         users.value.data = users.value.data.filter(user => !selectedUsers.value.includes(user.id));
+//         selectedUsers.value = [];
+//         selectAll.value = false;
+//         toastr.success(response.data.message);
+//     });
+// };
+
+// const selectAll = ref(false);
+// const selectAllUsers = () => {
+//     if (selectAll.value) {
+//         selectedUsers.value = users.value.data.map(user => user.id);
+//     } else {
+//         selectedUsers.value = [];
+//     }
+//     console.log(selectedUsers.value);
+// }
+
+// watch(searchQuery, debounce(() => {
+//     getUsers();
+// }, 300));
 
 onMounted(() => {
-  getUsers();
+    getUsers();
 });
 </script>
 <template>
@@ -192,33 +197,16 @@ onMounted(() => {
               <th scope="col">Handle</th>
             </tr>
           </thead>
-          <tbody v-if="users.value != 0">
-            <tr v-for="(user, index) in users" :key="user.id" class="text-center">
-              <th scope="row">{{ index + 1 }}</th>
-              <td>{{ user.name }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ convertDateToCharacterMonth(user.created_at) }}</td>
-              <td>{{ user.role }}</td>
+          <tbody>
 
-              <td>
-                <a href="#" @click.prevent="editUser(user)"
-                  ><i class="fa fa-edit"></i>
-                </a>
+         <UserListItem  v-for="(user, index) in users"
+          :key="user.id"
+          :user=user
+          :index=index
+          @user-deleted="userDeleted"
 
-                <a href="#" @click.prevent="confirmUserDeletion(user)"
-                  ><i
-                    class="fa fa-trash ml-3 text-danger"
-                    aria-hidden="true"
-                  ></i>
-                </a>
-              </td>
-            </tr>
-            <tr></tr>
-          </tbody>
-          <tbody v-else>
-            <tr class="text-center">
-              No Data
-            </tr>
+          />
+
           </tbody>
         </table>
       </div>
@@ -328,37 +316,5 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- Modal -->
-  <div class="modal fade" id="deleteUserModal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-          <button
-            type="button"
-            class="close"
-            data-dismiss="modal"
-            aria-label="Close"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p>Are you sure you want to delete?</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">
-            No
-          </button>
-          <button
-            @click.prevent="deleteUser"
-            type="button"
-            class="btn btn-danger"
-          >
-            Yes
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+
 </template>

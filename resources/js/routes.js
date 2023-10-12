@@ -20,4 +20,9 @@ export default [
         name: 'admin.users',
         component: UserList,
     },
+    {
+        path: '/admin',
+        name: 'admin',
+        component: UserList,
+    },
 ]
