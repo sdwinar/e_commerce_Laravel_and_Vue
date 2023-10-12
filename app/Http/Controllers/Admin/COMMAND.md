@@ -13,4 +13,6 @@ npm i vue-router
  npm i jquery 
  .....................
  npm install vee-validate --save
- npm install -s yup
+ npm install -s 
+ .................................
+ npm i moment

@@ -4,6 +4,7 @@ import { ref, onMounted, reactive } from "vue";
 import { Form, Field, useResetForm } from "vee-validate";
 import * as yup from "yup";
 import { useToastr } from "../../toastr.js";
+import { convertDateToCharacterMonth } from "../../helper.js";
 
 const toastr = useToastr();
 const users = ref([]);
@@ -11,6 +12,7 @@ const editing = ref(false);
 const formValues = ref(); // formValues.value = {
 const form = ref(null); //form.value.resetForm();
 const userIdBeingDeleted = ref(null);
+
 
 // ***********************************************************
 
@@ -58,14 +60,10 @@ const createUser = (values, { resetForm, setErrors }) => {
 };
 // ***********************************************************cancel_button_resetform
 
-const addUser = () => {
+const addUser = ({ resetForm }) => {
   editing.value = false;
-  formValues.value = {
-    id: "",
-    name: "",
-    email: "",
-    password: "",
-  };  // ***********************************************************
+  resetForm();
+  // ***********************************************************
 };
 // ***********************************************************cancel_button_resetform
 
@@ -132,21 +130,20 @@ const handleSubmit = (values, actions) => {
 
 //******************************************************************** */
 const confirmUserDeletion = (user) => {
-    userIdBeingDeleted.value = user.id;
-    $('#deleteUserModal').modal('show');
+  userIdBeingDeleted.value = user.id;
+  $("#deleteUserModal").modal("show");
 };
 //******************************************************************** */
 const deleteUser = () => {
-    axios.delete(`/api/users/${userIdBeingDeleted.value}`)
-    .then(() => {
-        $('#deleteUserModal').modal('hide');
-       users.value = users.value.filter(user => user.id !== userIdBeingDeleted.value);
-       toastr.success('User deleted successfully!');
-
-    });
+  axios.delete(`/api/users/${userIdBeingDeleted.value}`).then(() => {
+    $("#deleteUserModal").modal("hide");
+    users.value = users.value.filter(
+      (user) => user.id !== userIdBeingDeleted.value
+    );
+    toastr.success("User deleted successfully!");
+  });
 };
 //******************************************************************** */
-
 
 onMounted(() => {
   getUsers();
@@ -164,7 +161,7 @@ onMounted(() => {
             <li class="breadcrumb-item">
               <router-link to="/admin">Home</router-link>
             </li>
-            <li class="breadcrumb-item active">Starter Page</li>
+            <li class="breadcrumb-item active">Users</li>
           </ol>
         </div>
       </div>
@@ -186,25 +183,33 @@ onMounted(() => {
       <div class="row">
         <table class="table table-bordered">
           <thead>
-            <tr>
+            <tr class="text-center">
               <th scope="col">#</th>
               <th scope="col">name</th>
               <th scope="col">email</th>
+              <th scope="col">created at</th>
+              <th scope="col">Role</th>
               <th scope="col">Handle</th>
             </tr>
           </thead>
           <tbody v-if="users.value != 0">
-            <tr v-for="(user, index) in users" :key="user.id">
+            <tr v-for="(user, index) in users" :key="user.id" class="text-center">
               <th scope="row">{{ index + 1 }}</th>
               <td>{{ user.name }}</td>
               <td>{{ user.email }}</td>
+              <td>{{ convertDateToCharacterMonth(user.created_at) }}</td>
+              <td>{{ user.role }}</td>
+
               <td>
                 <a href="#" @click.prevent="editUser(user)"
                   ><i class="fa fa-edit"></i>
                 </a>
 
                 <a href="#" @click.prevent="confirmUserDeletion(user)"
-                  ><i class="fa fa-trash ml-3 text-danger" aria-hidden="true"></i>
+                  ><i
+                    class="fa fa-trash ml-3 text-danger"
+                    aria-hidden="true"
+                  ></i>
                 </a>
               </td>
             </tr>
@@ -324,24 +329,36 @@ onMounted(() => {
   </div>
 
   <!-- Modal -->
-<div class="modal fade" id="deleteUserModal">
- <div class="modal-dialog">
-  <div class="modal-content">
-   <div class="modal-header">
-    <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-    </button>
-   </div>
-   <div class="modal-body">
-    <p>Are you sure you want to delete?</p>
+  <div class="modal fade" id="deleteUserModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            No
+          </button>
+          <button
+            @click.prevent="deleteUser"
+            type="button"
+            class="btn btn-danger"
+          >
+            Yes
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="modal-footer">
-
-    <button              type="button"              class="btn btn-secondary"              data-dismiss="modal"            >              No
-            </button>    <button  @click.prevent="deleteUser" type="button" class="btn btn-danger">Yes</button>
-   </div>
-  </div>
- </div>
-</div>
 </template>
