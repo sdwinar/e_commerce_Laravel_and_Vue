@@ -27,3 +27,23 @@ import moment from "moment";
 
     return formattedDate.replace(numericMonth, characterMonth);
   }
+
+  //********************************************************************************* */
+  export function roles() {
+
+  const roles = ref([
+    {
+        name: 'MANEGER',
+        value: 0,
+    },
+    {
+        name: 'ADMIN',
+        value: 1,
+    },
+    {
+        name: 'USER',
+        value: 2,
+    }
+]);
+}
+
