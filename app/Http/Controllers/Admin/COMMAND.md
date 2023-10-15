@@ -16,3 +16,5 @@ npm i vue-router
  npm install -s 
  .................................
  npm i moment
+ >>>>>>>>>>>>>>>>>>>>>
+npm i laravel-vue-pagination

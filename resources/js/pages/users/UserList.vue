@@ -1,23 +1,24 @@
 <script setup>
 import axios from "axios";
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted, reactive, watch } from "vue";
 import { Form, Field, useResetForm } from "vee-validate";
 import * as yup from "yup";
 import UserListItem from "./UserListItem.vue";
 import { useToastr } from "../../toastr.js";
+import { debounce } from "lodash";
+import { Bootstrap4Pagination } from "laravel-vue-pagination";
 
 const toastr = useToastr();
 
-
-const users = ref([]);
+const users = ref({'data':[]});
 const editing = ref(false);
 const formValues = ref(); // formValues.value = {
 const form = ref(null); //form.value.resetForm();
 
 // ***********************************************************
 
-const getUsers = () => {
-  axios.get("/api/users").then((response) => {
+const getUsers = (page = 1) => {
+  axios.get(`/api/users?page=${page}`).then((response) => {
     users.value = response.data;
     // alert(users.value)
   });
@@ -59,10 +60,37 @@ const createUser = (values, { resetForm, setErrors }) => {
       }
     });
 };
+// ***********************************************************seaech
+const searchQuery = ref(null);
+const search = () => {
+  axios
+    .get("/api/users/search", {
+      params: {
+        query: searchQuery.value,
+      },
+    })
+    .then((response) => {
+      users.value = response.data;
+    })
+    .catch((error) => {
+      //   setErrors(error.response.data.errors);
+      console.log(error);
+    });
+  // ***********************************************************
+};
+watch(
+  searchQuery,
+  debounce(() => {
+    search();
+  }, 600)
+);
+
 // ***********************************************************cancel_button_resetform
 
 const addUser = ({ resetForm }) => {
   editing.value = false;
+  $("#userFormModal").modal("show");
+
   resetForm();
   // ***********************************************************
 };
@@ -129,9 +157,9 @@ const handleSubmit = (values, actions) => {
   }
 };
 
-const userDeleted = () =>{
-    getUsers();
-}
+const userDeleted = () => {
+  getUsers();
+};
 
 //******************************************************************** */
 
@@ -159,19 +187,24 @@ onMounted(() => {
   </div>
   <div class="content">
     <div class="container-fluid">
-      <div class="row">
-        <button
-          type="button"
-          class="btn btn-primary mb-2"
-          data-toggle="modal"
-          data-target="#userFormModal"
-          @click="addUser"
-        >
-          Add New User
-        </button>
+      <div class="d-flex justify-content-between">
+        <div class="d-flex">
+          <button @click="addUser" type="button" class="mb-2 btn btn-primary">
+            <i class="fa fa-plus-circle mr-1"></i>
+            Add New User
+          </button>
+        </div>
+        <div>
+          <input
+            type="text"
+            v-model="searchQuery"
+            class="form-control"
+            placeholder="Search..."
+          />
+        </div>
       </div>
       <div class="row">
-        <table class="table table-bordered">
+        <table class="table table-bordered shadow p-3 mb-5 bg-white rounded">
           <thead>
             <tr class="text-center">
               <th scope="col">#</th>
@@ -182,17 +215,23 @@ onMounted(() => {
               <th scope="col">Handle</th>
             </tr>
           </thead>
-          <tbody>
-
-            <UserListItem v-for="(user, index) in users" :key="user.id"
-            :user = user
-            :index = index
-            @edit-user = "editUser"
-            @user-deleted="userDeleted"
+          <tbody v-if="users.data.length > 0">
+            <UserListItem
+              v-for="(user, index) in users.data"
+              :key="user.id"
+              :user="user"
+              :index="index"
+              @edit-user="editUser"
+              @user-deleted="userDeleted"
             />
-
+          </tbody>
+          <tbody v-else>
+            <tr>
+              <td colspan="6" class="text-center">No data in databse</td>
+            </tr>
           </tbody>
         </table>
+        <Bootstrap4Pagination :data="users" @pagination-change-page="getUsers"/>
       </div>
     </div>
   </div>
@@ -299,6 +338,4 @@ onMounted(() => {
       </Form>
     </div>
   </div>
-
-
 </template>

@@ -15,7 +15,7 @@ class UserController extends Controller
     {
         $count = DB::table('users')->count();
         if ($count > 0) {
-            return User::latest()->get();
+            return User::latest()->orderBy('id','DESC')->paginate(5);
         } else {
 
             return 0;
@@ -70,5 +70,12 @@ class UserController extends Controller
         ]);
 
         return response()->json(['success' => true]);
+    }
+
+    public function search()
+    {
+        $searchQury = request('query');
+        $users = User::where('name', 'like', "%{$searchQury}%")->orderBy('id','DESC')->paginate(5);
+        return response()->json($users);
     }
 }
