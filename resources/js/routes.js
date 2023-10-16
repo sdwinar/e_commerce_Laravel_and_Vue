@@ -1,9 +1,19 @@
 import Dashboard from './components/Dashboard.vue';
 import ListAppointments from './pages/appointments/ListAppointments.vue';
 import UserList from './pages/users/UserList.vue';
+import Login from './pages/auth/Login.vue';
 
 export default [
-
+    {
+        path: '/home/',
+        name: 'admin.home',
+        component: Login,
+    },
+    {
+        path: '/login/',
+        name: 'admin.login',
+        component: Login,
+    },
 
     {
         path: '/admin/dashboard',

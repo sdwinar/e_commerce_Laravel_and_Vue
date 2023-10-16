@@ -15,20 +15,23 @@ use App\Http\Controllers\ApplicationController;
 |
 */
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::get('/', function () {
+    return view('welcome');
+});
 
 // Route::get('/admin/dashboard', function () {
 //     return view('admin.dashboard');
 // });
-Route::get('/api/users', [UserController::class, 'index']);
-Route::get('/api/users/search', [UserController::class, 'search']);
-Route::post('/api/users', [UserController::class, 'store']);
-Route::put('/api/users/{user}', [UserController::class, 'update']);
-Route::delete('/api/users/{user}', [UserController::class, 'destory']);
-Route::patch('/api/users/{user}/change-role', [UserController::class, 'changeRole']);
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/api/users', [UserController::class, 'index']);
+    Route::get('/api/users/search', [UserController::class, 'search']);
+    Route::post('/api/users', [UserController::class, 'store']);
+    Route::put('/api/users/{user}', [UserController::class, 'update']);
+    Route::delete('/api/users/{user}', [UserController::class, 'destory']);
+    Route::patch('/api/users/{user}/change-role', [UserController::class, 'changeRole']);
+});
 
 
-Route::get('{view}', ApplicationController::class)->where('view', '(.*)');
-
+Route::get('{view}', ApplicationController::class)->where('view', '(.*)')->middleware('auth');

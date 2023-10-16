@@ -18,3 +18,8 @@ npm i vue-router
  npm i moment
  >>>>>>>>>>>>>>>>>>>>>
 npm i laravel-vue-pagination
+||||||||||||||||||||||||||||||
+authentication 
+############
+composer require laravel/fortify
+php artisan vendor:publish --provider="Laravel\Fortify\FortifyServiceProvider"
